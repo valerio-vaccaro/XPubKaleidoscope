@@ -5,6 +5,7 @@ import argparse
 import base58
 import hashlib
 import binascii
+import hmac
 
 # Version bytes for different formats with their corresponding BIP32 paths and address types
 VERSION_BYTES = {
@@ -83,6 +84,7 @@ class Colors:
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
+    PURPLE = '\033[95m'  # Added for fingerprint
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
@@ -98,7 +100,8 @@ ICONS = {
     'input': '📥',
     'output': '📤',
     'error': '❌',
-    'success': '✅'
+    'success': '✅',
+    'fingerprint': '🔍'
 }
 
 def double_sha256(data):
@@ -122,6 +125,21 @@ def get_format_info(fmt):
         'network': info['network']
     }
 
+def calculate_fingerprint(xpub):
+    """Calculate the fingerprint (first 4 bytes of hash160) of the key."""
+    try:
+        decoded = base58.b58decode(xpub)
+        # Extract the public key part (33 bytes) starting from byte 45
+        pubkey = decoded[45:78]
+        # Calculate RIPEMD160(SHA256(pubkey))
+        sha256_hash = hashlib.sha256(pubkey).digest()
+        ripemd160_hash = hashlib.new('ripemd160', sha256_hash).digest()
+        # Take first 4 bytes as fingerprint
+        fingerprint = ripemd160_hash[:4].hex().upper()
+        return fingerprint
+    except Exception:
+        return "Unable to calculate fingerprint"
+
 def print_key_info(fmt, key=None):
     """Print formatted key information with colors and icons."""
     info = get_format_info(fmt)
@@ -133,6 +151,8 @@ def print_key_info(fmt, key=None):
     print(f"  {ICONS['path']} Derivation Path: {Colors.YELLOW}{info['path']}{Colors.ENDC}")
     if key:
         print(f"  {ICONS['key']} Key: {Colors.BOLD}{key}{Colors.ENDC}")
+        fingerprint = calculate_fingerprint(key)
+        print(f"  🔍 Fingerprint: {Colors.PURPLE}{fingerprint}{Colors.ENDC}")
 
 def identify_format(xpub):
     """Identify the format of an extended public key."""
