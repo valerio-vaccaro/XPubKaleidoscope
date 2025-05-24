@@ -50,9 +50,6 @@ venv\Scripts\activate
 # On Unix or MacOS:
 source venv/bin/activate
 
-# Upgrade pip
-pip install --upgrade pip
-
 # Install requirements
 pip install -r requirements.txt
 ```
