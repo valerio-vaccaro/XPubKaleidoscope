@@ -12,19 +12,19 @@ VERSION_BYTES = {
     # Mainnet Single-Signature
     'xpub': {
         'bytes': b'\x04\x88\xb2\x1e',
-        'path': "m/44'/0'",
+        'path': "m/44'/0'/0'",
         'address_type': 'P2PKH or P2SH',
         'network': 'mainnet'
     },
     'ypub': {
         'bytes': b'\x04\x9d\x7c\xb2',
-        'path': "m/49'/0'",
+        'path': "m/49'/0'/0'",
         'address_type': 'P2WPKH in P2SH',
         'network': 'mainnet'
     },
     'zpub': {
         'bytes': b'\x04\xb2\x47\x46',
-        'path': "m/84'/0'",
+        'path': "m/84'/0'/0'",
         'address_type': 'P2WPKH',
         'network': 'mainnet'
     },
@@ -44,19 +44,19 @@ VERSION_BYTES = {
     # Testnet Single-Signature
     'tpub': {
         'bytes': b'\x04\x35\x87\xcf',
-        'path': "m/44'/1'",
+        'path': "m/44'/1'/0'",
         'address_type': 'P2PKH or P2SH',
         'network': 'testnet'
     },
     'upub': {
         'bytes': b'\x04\x4a\x52\x62',
-        'path': "m/49'/1'",
+        'path': "m/49'/1'/0'",
         'address_type': 'P2WPKH in P2SH',
         'network': 'testnet'
     },
     'vpub': {
         'bytes': b'\x04\x5f\x1c\xf6',
-        'path': "m/84'/1'",
+        'path': "m/84'/1'/0'",
         'address_type': 'P2WPKH',
         'network': 'testnet'
     },
@@ -85,6 +85,7 @@ class Colors:
     YELLOW = '\033[93m'
     RED = '\033[91m'
     PURPLE = '\033[95m'  # Added for fingerprint
+    CYAN = '\033[96m'  # Added for descriptor
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
@@ -101,7 +102,8 @@ ICONS = {
     'output': '📤',
     'error': '❌',
     'success': '✅',
-    'fingerprint': '🔍'
+    'fingerprint': '🔍',
+    'descriptor': '📝'
 }
 
 def double_sha256(data):
@@ -122,7 +124,7 @@ def get_format_info(fmt):
         'format': fmt,
         'path': info['path'],
         'type': info['address_type'],
-        'network': info['network']
+        'network': info['network'],
     }
 
 def calculate_fingerprint(xpub):
@@ -140,6 +142,75 @@ def calculate_fingerprint(xpub):
     except Exception:
         return "Unable to calculate fingerprint"
 
+def convert_to_xpub(key):
+    """Convert any format back to xpub for descriptor."""
+    try:
+        current_format = identify_format(key)
+        if current_format == 'xpub':
+            return key
+        return convert_xpub(key, 'xpub')
+    except Exception:
+        return key  # Return original key if conversion fails
+
+def get_descriptors(fmt, key, fingerprint, path):
+    """Get external and internal descriptors based on format."""
+    base_descriptors = {
+        'xpub': {
+            'external': 'pkh([{fingerprint}/{path}]{key}/0/*)',
+            'internal': 'pkh([{fingerprint}/{path}]{key}/1/*)'
+        },
+        'ypub': {
+            'external': 'sh(wpkh([{fingerprint}/{path}]{key}/0/*))',
+            'internal': 'sh(wpkh([{fingerprint}/{path}]{key}/1/*))'
+        },
+        'zpub': {
+            'external': 'wpkh([{fingerprint}/{path}]{key}/0/*)',
+            'internal': 'wpkh([{fingerprint}/{path}]{key}/1/*)'
+        },
+        'Ypub': {
+            'external': 'sh(wsh(multi(k,[{fingerprint}/{path}]{key}/0/*,...)))',
+            'internal': 'sh(wsh(multi(k,[{fingerprint}/{path}]{key}/1/*,...)))'
+        },
+        'Zpub': {
+            'external': 'wsh(multi(k,[{fingerprint}/{path}]{key}/0/*,...))',
+            'internal': 'wsh(multi(k,[{fingerprint}/{path}]{key}/1/*,...))'
+        },
+        'tpub': {
+            'external': 'pkh([{fingerprint}/{path}]{key}/0/*)',
+            'internal': 'pkh([{fingerprint}/{path}]{key}/1/*)'
+        },
+        'upub': {
+            'external': 'sh(wpkh([{fingerprint}/{path}]{key}/0/*))',
+            'internal': 'sh(wpkh([{fingerprint}/{path}]{key}/1/*))'
+        },
+        'vpub': {
+            'external': 'wpkh([{fingerprint}/{path}]{key}/0/*)',
+            'internal': 'wpkh([{fingerprint}/{path}]{key}/1/*)'
+        },
+        'Upub': {
+            'external': 'sh(wsh(multi(k,[{fingerprint}/{path}]{key}/0/*,...)))',
+            'internal': 'sh(wsh(multi(k,[{fingerprint}/{path}]{key}/1/*,...)))'
+        },
+        'Vpub': {
+            'external': 'wsh(multi(k,[{fingerprint}/{path}]{key}/0/*,...))',
+            'internal': 'wsh(multi(k,[{fingerprint}/{path}]{key}/1/*,...))'
+        }
+    }
+    
+    descriptors = base_descriptors[fmt]
+    return {
+        'external': descriptors['external'].format(
+            key=key,
+            fingerprint=fingerprint,
+            path=path
+        ),
+        'internal': descriptors['internal'].format(
+            key=key,
+            fingerprint=fingerprint,
+            path=path
+        )
+    }
+
 def print_key_info(fmt, key=None):
     """Print formatted key information with colors and icons."""
     info = get_format_info(fmt)
@@ -152,7 +223,21 @@ def print_key_info(fmt, key=None):
     if key:
         print(f"  {ICONS['key']} Key: {Colors.BOLD}{key}{Colors.ENDC}")
         fingerprint = calculate_fingerprint(key)
-        print(f"  🔍 Fingerprint: {Colors.PURPLE}{fingerprint}{Colors.ENDC}")
+        print(f"  {ICONS['fingerprint']} Fingerprint: {Colors.PURPLE}{fingerprint}{Colors.ENDC}")
+        xpub_key = convert_to_xpub(key)
+        
+        # Get descriptors
+        descriptors = get_descriptors(
+            fmt,
+            xpub_key,
+            fingerprint,
+            info['path'].lstrip('m/')
+        )
+        
+        # Print descriptors
+        print(f"  {ICONS['descriptor']} Descriptors:")
+        print(f"    External (Receive): {Colors.CYAN}{descriptors['external']}{Colors.ENDC}")
+        print(f"    Internal (Change): {Colors.CYAN}{descriptors['internal']}{Colors.ENDC}")
 
 def identify_format(xpub):
     """Identify the format of an extended public key."""
