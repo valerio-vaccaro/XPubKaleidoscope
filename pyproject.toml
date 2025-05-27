@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xpubkaleidoscope"
+version = "0.0.1"
+authors = [
+    {name = "Valerio Vaccaro", email = "valerio.vaccaro@gmail.com"},
+]
+description = "A Python utility for converting Bitcoin Extended Public Keys between different formats"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "base58"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security :: Cryptography",
+]
+
+[project.urls]
+Homepage = "https://github.com/valerio-vaccaro/XPubKaleidoscope"
+"Bug Tracker" = "https://github.com/valerio-vaccaro/XPubKaleidoscope/issues"
+
+[project.scripts]
+xpubkaleidoscope = "xpubkaleidoscope.xpub_converter:main" 

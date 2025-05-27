@@ -24,15 +24,14 @@ XPubKaleidoscope allows you to easily convert Bitcoin extended public keys betwe
 - `Upub` - Multi-signature P2WSH in P2SH - Path: Custom
 - `Vpub` - Multi-signature P2WSH - Path: Custom
 
-## 🚀 Setup
+## 🚀 Setup & Installation
 
-### 📋 Prerequisites
-- Python 3.6 or higher
-- pip (Python package installer)
-- Git
+### 📦 Using pip (Recommended)
+```bash
+pip install xpubkaleidoscope
+```
 
-### 💻 Installation
-
+### 🛠️ From Source
 1. Clone the repository:
 ```bash
 git clone https://github.com/valerio-vaccaro/XPubKaleidoscope.git
@@ -41,7 +40,6 @@ cd XPubKaleidoscope
 
 2. Set up a virtual environment:
 ```bash
-# Create virtual environment
 python3 -m venv venv
 
 # Activate virtual environment
@@ -50,7 +48,6 @@ venv\Scripts\activate
 # On Unix or MacOS:
 source venv/bin/activate
 
-# Install requirements
 pip install -r requirements.txt
 ```
 
@@ -60,6 +57,23 @@ deactivate
 ```
 
 ## 🛠️ Usage
+
+### 📚 As a Python Package
+```python
+from xpubkaleidoscope import XPubConverter
+
+# Initialize converter
+converter = XPubConverter()
+
+# Convert xpub to different format
+result = converter.convert("your_xpub_key_here", target_format="zpub")
+
+# Get key information
+info = converter.identify("your_xpub_key_here")
+
+# Convert to all formats
+all_formats = converter.convert_all("your_xpub_key_here")
+```
 
 ### 🖥️ Command Line Interface
 
@@ -83,7 +97,7 @@ xpub:
 
 #### Convert to specific format:
 ```bash
-python xpub_converter.py "your_xpub_key_here" -t zpub
+xpubkaleidoscope "your_xpub_key_here" -t zpub
 ```
 Output example:
 ```
@@ -106,7 +120,7 @@ zpub:
 
 #### Convert to all supported formats:
 ```bash
-python xpub_converter.py "your_xpub_key_here" -a
+xpubkaleidoscope "your_xpub_key_here" -a
 ```
 Output example:
 ```
@@ -137,7 +151,21 @@ zpub:
 
 #### Show help:
 ```bash
-python xpub_converter.py -h
+xpubkaleidoscope -h
+
+usage: xpubkaleidoscope [-h] [-t {xpub,ypub,zpub,Ypub,Zpub,tpub,upub,vpub,Upub,Vpub}] [-i] [-a] key
+
+Convert between extended public key formats
+
+positional arguments:
+  key                   The extended public key to convert
+
+options:
+  -h, --help            show this help message and exit
+  -t {xpub,ypub,zpub,Ypub,Zpub,tpub,upub,vpub,Upub,Vpub}, --to {xpub,ypub,zpub,Ypub,Zpub,tpub,upub,vpub,Upub,Vpub}
+                        Target format to convert to
+  -i, --identify        Only identify the format
+  -a, --all             Convert to all supported formats
 ```
 
 ## ✨ Features
